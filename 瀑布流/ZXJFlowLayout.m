@@ -9,7 +9,10 @@
 #import "ZXJFlowLayout.h"
 
 
-static const NSInteger ZXJDefaultColumn = 3;
+static const NSInteger ZXJDefaultColumn = 3;//默认列数
+
+static const UIEdgeInsets ZXJDefaultEdgeInsets = {20,10,20,10};//默认偏移
+
 
 @interface ZXJFlowLayout ()
 
@@ -21,16 +24,35 @@ static const NSInteger ZXJDefaultColumn = 3;
 @property(nonatomic,assign)NSInteger AllHeight;
 
 
-- (UIEdgeInsets)edgeInsets;
+- (UIEdgeInsets)edgeInsets;//偏移
+
+- (NSInteger)columnCount;//列数
 
 @end
 
 @implementation ZXJFlowLayout
 
 - (UIEdgeInsets)edgeInsets {
-    UIEdgeInsets insets = {20,10,20,10};
-    return insets;
+    
+    if (self.delegate && [self.delegate respondsToSelector:@selector(zxjFlowLayout_edgeInsetsOfLayout:)]) {
+          UIEdgeInsets insets = [self.delegate zxjFlowLayout_edgeInsetsOfLayout:self];
+        return insets;
+    }
+    return ZXJDefaultEdgeInsets;
 }
+
+- (NSInteger)columnCount {
+    if (self.delegate && [self.delegate respondsToSelector:@selector(zxjFlowLayout_numberOfColumnInLayout:)]) {
+        if ([self.delegate zxjFlowLayout_numberOfColumnInLayout:self]) {
+            return [self.delegate zxjFlowLayout_numberOfColumnInLayout:self];
+        } else {
+            return ZXJDefaultColumn;
+        }
+    } else {
+        return ZXJDefaultColumn;
+    }
+}
+
 
 
 - (NSMutableArray *)columnHeights {
@@ -47,13 +69,15 @@ static const NSInteger ZXJDefaultColumn = 3;
     return _attrs;
 }
 
+
+
+
+
 - (void)prepareLayout {
     [super prepareLayout];
     
-    
-    
     [self.columnHeights removeAllObjects];
-    for (int i = 0 ; i < ZXJDefaultColumn; i++) {
+    for (int i = 0 ; i < self.columnCount; i++) {
         [self.columnHeights addObject:@(self.edgeInsets.top)];
     }
     
@@ -77,15 +101,14 @@ static const NSInteger ZXJDefaultColumn = 3;
     
     UICollectionViewLayoutAttributes *attri = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
     
-    CGFloat itemW = (self.collectionView.frame.size.width - self.edgeInsets.left -  self.edgeInsets.right - (ZXJDefaultColumn-1)*10)/ZXJDefaultColumn;
+    CGFloat itemW = (self.collectionView.frame.size.width - self.edgeInsets.left -  self.edgeInsets.right - (self.columnCount-1)*self.columnWidth)/self.columnCount;
     
-    CGFloat itemH = arc4random_uniform(50) + 100;
+    CGFloat itemH = [self.delegate zxjFlowLayout_heightForItemInLayout:self];
     
     NSInteger minColumn = 0;
-    
     CGFloat minColumnHeight = [self.columnHeights[0] doubleValue];
     
-    for (int i = 0; i < ZXJDefaultColumn; i++) {
+    for (int i = 0; i < self.columnCount; i++) {
         if (minColumnHeight > [self.columnHeights[i] doubleValue]) {
             minColumn = i;
             minColumnHeight = [self.columnHeights[i] doubleValue];
@@ -93,13 +116,13 @@ static const NSInteger ZXJDefaultColumn = 3;
     }
     
     
-    CGFloat X = self.edgeInsets.left + (itemW + 10)*minColumn;
+    CGFloat X = self.edgeInsets.left + (itemW + self.columnWidth)*minColumn;
     
     CGFloat Y = minColumnHeight;
     if (Y != self.edgeInsets.top) {
-        Y = Y + 10 ;
+        Y = Y + self.lineHeight ;
     }
-
+    
     
     attri.frame = CGRectMake(X, Y, itemW, itemH);
     
@@ -118,6 +141,8 @@ static const NSInteger ZXJDefaultColumn = 3;
     
     
 }
+
+
 
 - (NSArray<UICollectionViewLayoutAttributes *> *)layoutAttributesForElementsInRect:(CGRect)rect {
     return self.attrs;

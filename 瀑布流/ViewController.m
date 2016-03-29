@@ -13,7 +13,7 @@
 
 static NSString *cellId = @"cellID";
 
-@interface ViewController ()<UICollectionViewDelegate,UICollectionViewDataSource>
+@interface ViewController ()<UICollectionViewDelegate,UICollectionViewDataSource,ZXJFlowLayoutDelegate>
 
 
 
@@ -29,6 +29,10 @@ static NSString *cellId = @"cellID";
     
     
     ZXJFlowLayout *layout = [[ZXJFlowLayout alloc] init];
+    layout.delegate = self;
+    layout.lineHeight = 0;
+    layout.columnWidth = 20;
+    
     _collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
     _collectionView.dataSource = self;
     _collectionView.delegate = self;
@@ -37,6 +41,25 @@ static NSString *cellId = @"cellID";
     
     
 }
+
+//指定每一列的高度
+- (CGFloat)zxjFlowLayout_heightForItemInLayout:(ZXJFlowLayout *)layout {
+    return arc4random_uniform(100) + 50;
+}
+
+//代理指定列数
+- (NSInteger)zxjFlowLayout_numberOfColumnInLayout:(ZXJFlowLayout *)layout {
+    return 4;
+}
+
+//代理指定edgeInsets
+
+- (UIEdgeInsets)zxjFlowLayout_edgeInsetsOfLayout:(ZXJFlowLayout *)layout {
+    UIEdgeInsets edgeInsets = {50,40,50,40};
+    return edgeInsets;
+}
+
+
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     return 100;
@@ -61,6 +84,8 @@ static NSString *cellId = @"cellID";
 
     return cell;
 }
+
+
 
 
 
